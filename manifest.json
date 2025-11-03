@@ -1,0 +1,27 @@
+{
+  "name": "FERRESOLUCIONES - Transferencias",
+  "short_name": "FERRESOLUCIONES",
+  "description": "Sistema de gestión de transferencias financieras",
+  "start_url": "https://transferenciasnew.manasakilla.com/index.html",
+  "display": "standalone",
+  "background_color": "#1a1a1a",
+  "theme_color": "#d4a017",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://transferenciasnew.manasakilla.com/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://transferenciasnew.manasakilla.com/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "scope": "https://transferenciasnew.manasakilla.com/",
+  "categories": ["finance", "business"],
+  "lang": "es-EC"
+}

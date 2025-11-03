@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#d4a017">
+    <meta name="description" content="Sistema de gestión de transferencias financieras - FERRESOLUCIONES">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="FERRESOLUCIONES">
+    <title>Ferresoluciones - Transferencias</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <img src="https://lh3.googleusercontent.com/d/1bqJM3Qw96FEIo4QSjHyn-n8laPHpfS1C=w2048" alt="Ferrisoluciones" class="nav-logo">
+                <span class="nav-title">Transferencias</span>
+            </div>
+            <div class="nav-user">
+                <span id="user-email" class="user-email"></span>
+                <button onclick="logout()" class="btn-logout">
+                    <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="saldo-card">
+            <div class="saldo-header">
+                <h2><i class="fas fa-wallet"></i> Saldo Actual</h2>
+                <p class="saldo-update">Última actualización: <span id="ultima-actualizacion">-</span></p>
+            </div>
+            <div class="saldo-amount" id="saldo-total">$0.00</div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card ingreso">
+                <div class="stat-icon"><i class="fas fa-arrow-up"></i></div>
+                <div class="stat-info">
+                    <p class="stat-label">Total Ingresos</p>
+                    <p class="stat-value" id="total-ingresos">$0.00</p>
+                </div>
+            </div>
+            <div class="stat-card egreso">
+                <div class="stat-icon"><i class="fas fa-arrow-down"></i></div>
+                <div class="stat-info">
+                    <p class="stat-label">Total Egresos</p>
+                    <p class="stat-value" id="total-egresos">$0.00</p>
+                </div>
+            </div>
+            <div class="stat-card total">
+                <div class="stat-icon"><i class="fas fa-list"></i></div>
+                <div class="stat-info">
+                    <p class="stat-label">Transacciones</p>
+                    <p class="stat-value" id="total-transacciones">0</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-card">
+            <h2 id="form-title"><i class="fas fa-plus-circle"></i> Nueva Transferencia</h2>
+            <form id="transferencia-form">
+                <input type="hidden" id="transferencia-id">
+                <input type="hidden" id="caso" value="ingreso">
+                
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label><i class="fas fa-exchange-alt"></i> Tipo de Movimiento *</label>
+                        <div class="tipo-buttons">
+                            <button type="button" class="tipo-btn active" data-tipo="ingreso">
+                                <i class="fas fa-arrow-up"></i> Ingreso
+                            </button>
+                            <button type="button" class="tipo-btn" data-tipo="egreso">
+                                <i class="fas fa-arrow-down"></i> Egreso
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="monto"><i class="fas fa-dollar-sign"></i> Monto ($) *</label>
+                        <input type="number" id="monto" step="0.01" min="0.01" placeholder="0.00">
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="motivo"><i class="fas fa-comment-alt"></i> Motivo / Descripción *</label>
+                        <textarea id="motivo" placeholder="Describe el motivo de la transferencia..." rows="3"></textarea>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label><i class="fas fa-camera"></i> Fotografía de Respaldo *</label>
+                        <input type="file" id="foto-input" accept="image/*" style="display: none;">
+                        <input type="file" id="camara-input" accept="image/*" capture="environment" style="display: none;">
+                        
+                        <div class="foto-buttons">
+                            <button type="button" class="btn-foto btn-camara" id="btn-camara">
+                                <i class="fas fa-camera"></i> Tomar Foto
+                            </button>
+                            <button type="button" class="btn-foto btn-galeria" id="btn-galeria">
+                                <i class="fas fa-images"></i> Seleccionar de Galería
+                            </button>
+                        </div>
+                        
+                        <div id="foto-preview" style="display: none;">
+                            <img id="preview-img" src="" alt="Vista previa">
+                            <p class="preview-filename" id="preview-filename"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary" id="submit-btn">
+                        <i class="fas fa-save"></i> Guardar Transferencia
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="filters-card">
+            <input type="text" id="search-input" placeholder="Buscar por motivo..." class="search-input">
+            <select id="filter-caso" class="filter-select">
+                <option value="">Todos los movimientos</option>
+                <option value="ingreso">Ingresos</option>
+                <option value="egreso">Egresos</option>
+            </select>
+        </div>
+
+        <div class="table-card">
+            <div id="loading" class="loading">Cargando transferencias...</div>
+            <div id="error-message" class="message" style="display: none;"></div>
+            
+            <div class="table-responsive">
+                <table id="transferencias-table">
+                    <thead>
+                        <tr>
+                            <th>Fecha/Hora</th>
+                            <th>Tipo</th>
+                            <th>Monto</th>
+                            <th>Motivo</th>
+                            <th>Subido Por</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transferencias-tbody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para ver detalles -->
+    <div id="modal-detalle" class="modal">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <h2 id="modal-title"><i class="fas fa-info-circle"></i> Detalles de la Transferencia</h2>
+            
+            <div class="modal-body">
+                <div class="detalle-grid">
+                    <div class="detalle-item">
+                        <label><i class="fas fa-calendar"></i> Fecha y Hora:</label>
+                        <span id="modal-fecha"></span>
+                    </div>
+                    <div class="detalle-item">
+                        <label><i class="fas fa-exchange-alt"></i> Tipo:</label>
+                        <span id="modal-tipo"></span>
+                    </div>
+                    <div class="detalle-item">
+                        <label><i class="fas fa-dollar-sign"></i> Monto:</label>
+                        <span id="modal-monto"></span>
+                    </div>
+                    <div class="detalle-item">
+                        <label><i class="fas fa-user"></i> Subido Por:</label>
+                        <span id="modal-subido"></span>
+                    </div>
+                    <div class="detalle-item full">
+                        <label><i class="fas fa-comment-alt"></i> Motivo:</label>
+                        <span id="modal-motivo"></span>
+                    </div>
+                </div>
+                
+                <div class="modal-foto">
+                    <label><i class="fas fa-camera"></i> Fotografía:</label>
+                    <img id="modal-img" src="" alt="Fotografía de respaldo">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="app.js"></script>
+    <script>
+        // Registrar Service Worker para PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js', {
+                    scope: '/'
+                })
+                    .then(registration => {
+                        console.log('Service Worker registrado:', registration);
+                    })
+                    .catch(error => {
+                        console.log('Error al registrar Service Worker:', error);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>
