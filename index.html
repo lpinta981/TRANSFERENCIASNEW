@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#d4a017">
     <meta name="description" content="Sistema de gestión de transferencias financieras - FERRESOLUCIONES">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="FERRESOLUCIONES">
@@ -70,7 +71,7 @@
                 
                 <div class="form-grid">
                     <div class="form-group full-width">
-                        <label><i class="fas fa-exchange-alt"></i> Tipo de Movimiento *</label>
+                        <label><i class="fas fa-exchange-alt"></i> Tipo de Movimiento</label>
                         <div class="tipo-buttons">
                             <button type="button" class="tipo-btn active" data-tipo="ingreso">
                                 <i class="fas fa-arrow-up"></i> Ingreso
@@ -81,20 +82,18 @@
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="monto"><i class="fas fa-dollar-sign"></i> Monto ($) *</label>
+                    <div class="form-group full-width">
+                        <label for="monto"><i class="fas fa-dollar-sign"></i> Monto ($)</label>
                         <input type="number" id="monto" step="0.01" min="0.01" placeholder="0.00">
                     </div>
 
                     <div class="form-group full-width">
-                        <label for="motivo"><i class="fas fa-comment-alt"></i> Motivo / Descripción *</label>
+                        <label for="motivo"><i class="fas fa-comment-alt"></i> Motivo / Descripción</label>
                         <textarea id="motivo" placeholder="Describe el motivo de la transferencia..." rows="3"></textarea>
                     </div>
 
                     <div class="form-group full-width">
-                        <label><i class="fas fa-camera"></i> Fotografía de Respaldo *</label>
-                        <input type="file" id="foto-input" accept="image/*" style="display: none;">
-                        <input type="file" id="camara-input" accept="image/*" capture="environment" style="display: none;">
+                        <label><i class="fas fa-camera"></i> Fotografía de Respaldo</label>
                         
                         <div class="foto-buttons">
                             <button type="button" class="btn-foto btn-camara" id="btn-camara">
@@ -185,6 +184,26 @@
                     <label><i class="fas fa-camera"></i> Fotografía:</label>
                     <img id="modal-img" src="" alt="Fotografía de respaldo">
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de confirmación personalizado -->
+    <div id="confirm-modal" class="confirm-modal">
+        <div class="confirm-content">
+            <div class="confirm-header">
+                <h3><i class="fas fa-question-circle"></i> Confirmación</h3>
+            </div>
+            <div class="confirm-body">
+                Mensaje de confirmación
+            </div>
+            <div class="confirm-footer">
+                <button class="confirm-btn confirm-btn-cancel" id="confirm-cancel">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+                <button class="confirm-btn confirm-btn-yes" id="confirm-yes">
+                    <i class="fas fa-check"></i> Sí, cambiar
+                </button>
             </div>
         </div>
     </div>

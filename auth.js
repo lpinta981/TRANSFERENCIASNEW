@@ -135,6 +135,24 @@ function showMessage(text, type) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+    // Verificar si hay un parámetro de logout en la URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const isLoggingOut = urlParams.get('logout') === 'true';
+    
+    if (isLoggingOut) {
+        // Si viene de un logout, asegurar que la sesión esté limpia
+        try {
+            await supabase.auth.signOut({ scope: 'local' });
+        } catch (error) {
+            console.log('Sesión ya cerrada');
+        }
+        
+        // Limpiar URL sin recargar
+        window.history.replaceState({}, document.title, window.location.pathname);
+        return;
+    }
+    
+    // Solo redirigir a index si hay sesión válida y NO viene de logout
     const { data: { session } } = await supabase.auth.getSession();
     
     if (session) {

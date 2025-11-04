@@ -11,24 +11,19 @@ const loading = document.getElementById('loading');
 const errorMessage = document.getElementById('error-message');
 const searchInput = document.getElementById('search-input');
 const filterCaso = document.getElementById('filter-caso');
-
-// Elementos que se ocultan para usuarios normales
 const saldoCard = document.querySelector('.saldo-card');
 const filtersCard = document.querySelector('.filters-card');
 
-// Configurar vista desde caché antes de cargar datos
 function setupViewFromCache() {
     const cachedRole = localStorage.getItem('userRole');
     const cachedNombres = localStorage.getItem('userNombres');
     const cachedApellidos = localStorage.getItem('userApellidos');
     
     if (cachedRole) {
-        // Mostrar nombre en cache si existe
         if (cachedNombres && cachedApellidos) {
             document.getElementById('user-email').textContent = cachedNombres + ' ' + cachedApellidos;
         }
         
-        // Configurar vista según rol en caché (instantáneo)
         const formCard = document.querySelector('.form-card');
         const statsGrid = document.querySelector('.stats-grid');
         const container = document.querySelector('.container');
@@ -45,7 +40,6 @@ function setupViewFromCache() {
         }
     }
     
-    // Mostrar contenido con fade-in suave
     setTimeout(() => {
         document.body.classList.add('loaded');
     }, 100);
@@ -76,21 +70,14 @@ async function checkAuth() {
     
     if (userData) {
         currentUserData = userData;
-        
-        // Actualizar caché
         localStorage.setItem('userRole', userData.rol);
         localStorage.setItem('userNombres', userData.nombres);
         localStorage.setItem('userApellidos', userData.apellidos);
-        
         document.getElementById('user-email').textContent = userData.nombres + ' ' + userData.apellidos;
-        
-        // Configurar vista según rol
         setupViewByRole(userData.rol);
     } else {
-        console.log('Usuario no encontrado en usuarios_ferreteria, usando datos de auth');
         localStorage.setItem('userRole', 'usuario');
         document.getElementById('user-email').textContent = currentUser.email;
-        // Si no tiene rol, tratarlo como usuario por defecto
         setupViewByRole('usuario');
     }
 }
@@ -101,31 +88,16 @@ function setupViewByRole(rol) {
     const container = document.querySelector('.container');
     
     if (rol === 'admin' || rol === 'contador') {
-        // Vista completa para admin y contador
         saldoCard.style.display = 'block';
         filtersCard.style.display = 'flex';
-        
-        // Orden normal: Saldo -> Stats -> Form -> Filters -> Table
-        
-        // Cargar todo
         loadSaldo();
         loadTransferencias();
     } else {
-        // Vista simplificada para usuario
         saldoCard.style.display = 'none';
         filtersCard.style.display = 'none';
-        
-        // Reordenar: Form primero, luego Stats, luego Table
-        // Mover el formulario al principio (después del navbar)
         container.insertBefore(formCard, container.firstChild);
-        
-        // Cambiar título del formulario
         document.getElementById('form-title').innerHTML = '<i class="fas fa-plus-circle"></i> Registrar nueva transferencia';
-        
-        // Stats después del form
         statsGrid.style.marginTop = '30px';
-        
-        // Solo cargar transferencias del día actual
         loadTransferenciasDelDia();
     }
 }
@@ -153,16 +125,12 @@ async function loadSaldo() {
     }
 }
 
-// Función para enriquecer transferencias con nombres de usuarios
 async function enrichTransferenciasWithNames(transferencias) {
     if (!transferencias || transferencias.length === 0) return transferencias;
     
-    // Obtener todos los emails únicos
     const emails = [...new Set(transferencias.map(t => t.subido_por).filter(e => e))];
-    
     if (emails.length === 0) return transferencias;
     
-    // Consultar usuarios_ferreteria para obtener nombres
     const { data: usuarios, error } = await supabase
         .from('usuarios_ferreteria')
         .select('email, nombres, apellidos')
@@ -173,7 +141,6 @@ async function enrichTransferenciasWithNames(transferencias) {
         return transferencias;
     }
     
-    // Crear mapa de email -> nombre completo
     const emailToName = {};
     if (usuarios) {
         usuarios.forEach(u => {
@@ -181,7 +148,6 @@ async function enrichTransferenciasWithNames(transferencias) {
         });
     }
     
-    // Enriquecer transferencias
     return transferencias.map(t => ({
         ...t,
         subido_por_nombre: emailToName[t.subido_por] || t.subido_por || 'N/A'
@@ -200,7 +166,6 @@ async function loadTransferencias() {
         
         if (error) throw error;
         
-        // Enriquecer con nombres
         allTransferencias = await enrichTransferenciasWithNames(data || []);
         calculateStats(allTransferencias);
         renderTransferencias(allTransferencias);
@@ -219,15 +184,12 @@ async function loadTransferenciasDelDia() {
     errorMessage.style.display = 'none';
     
     try {
-        // Obtener fecha de hoy en zona horaria de Ecuador (UTC-5)
         const ahora = new Date();
-        const ecuadorOffset = -5 * 60; // Ecuador está en UTC-5
+        const ecuadorOffset = -5 * 60;
         const localOffset = ahora.getTimezoneOffset();
         const diferenciaMinutos = ecuadorOffset - localOffset;
-        
         const fechaEcuador = new Date(ahora.getTime() + diferenciaMinutos * 60000);
         fechaEcuador.setHours(0, 0, 0, 0);
-        
         const inicioDia = fechaEcuador.toISOString();
         
         const { data, error } = await supabase
@@ -238,7 +200,6 @@ async function loadTransferenciasDelDia() {
         
         if (error) throw error;
         
-        // Enriquecer con nombres
         allTransferencias = await enrichTransferenciasWithNames(data || []);
         calculateStatsDelDia(allTransferencias);
         renderTransferencias(allTransferencias);
@@ -275,17 +236,15 @@ function calculateStatsDelDia(data) {
         .filter(t => t.caso === 'egreso')
         .reduce((sum, t) => sum + parseFloat(t.monto || 0), 0);
     
-    // Obtener fecha actual en Ecuador
     const fechaHoy = new Date();
     const opciones = { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'America/Guayaquil' };
     const fechaFormateada = fechaHoy.toLocaleDateString('es-EC', opciones);
     
-    // Actualizar etiquetas para indicar que son del día con la fecha
     document.querySelector('.stat-card.ingreso .stat-label').innerHTML = 
         '<i class="fas fa-calendar-day"></i> Ingresos de Hoy<br><small style="font-size: 0.75em; opacity: 0.8;">' + fechaFormateada + '</small>';
     document.querySelector('.stat-card.egreso .stat-label').innerHTML = 
         '<i class="fas fa-calendar-day"></i> Egresos de Hoy<br><small style="font-size: 0.75em; opacity: 0.8;">' + fechaFormateada + '</small>';
-    document.querySelector('.stat-card.total').style.display = 'none'; // Ocultar total de transacciones
+    document.querySelector('.stat-card.total').style.display = 'none';
     
     document.getElementById('total-ingresos').textContent = '$' + totalIngresos.toFixed(2);
     document.getElementById('total-egresos').textContent = '$' + totalEgresos.toFixed(2);
@@ -320,7 +279,6 @@ function renderTransferencias(data) {
             '</tr>';
     }).join('');
     
-    // Agregar event listeners a las filas
     document.querySelectorAll('.transferencia-row').forEach(row => {
         row.addEventListener('click', () => {
             const index = parseInt(row.dataset.index);
@@ -342,49 +300,119 @@ function filterTransferencias() {
     renderTransferencias(filtered);
 }
 
-// Manejar botones de tipo (ingreso/egreso)
 document.querySelectorAll('.tipo-btn').forEach(btn => {
     btn.addEventListener('click', function() {
-        // Remover active de todos
         document.querySelectorAll('.tipo-btn').forEach(b => b.classList.remove('active'));
-        // Agregar active al clickeado
         this.classList.add('active');
-        // Actualizar el input hidden
         document.getElementById('caso').value = this.dataset.tipo;
     });
 });
 
-// Variables para manejo de foto
 let currentPhoto = null;
-let currentPhotoURL = null;
 
 const btnCamara = document.getElementById('btn-camara');
 const btnGaleria = document.getElementById('btn-galeria');
-const camaraInput = document.getElementById('camara-input');
-const fotoInput = document.getElementById('foto-input');
 const fotoPreview = document.getElementById('foto-preview');
 const previewImg = document.getElementById('preview-img');
 const previewFilename = document.getElementById('preview-filename');
 
+// Modal de confirmación personalizado
+const confirmModal = document.getElementById('confirm-modal');
+const confirmYesBtn = document.getElementById('confirm-yes');
+const confirmCancelBtn = document.getElementById('confirm-cancel');
+
+// Función para mostrar modal de confirmación personalizado
+function showConfirmModal(message) {
+    return new Promise((resolve) => {
+        const confirmBody = document.querySelector('.confirm-body');
+        confirmBody.textContent = message;
+        confirmModal.style.display = 'block';
+        
+        confirmYesBtn.onclick = () => {
+            confirmModal.style.display = 'none';
+            resolve(true);
+        };
+        
+        confirmCancelBtn.onclick = () => {
+            confirmModal.style.display = 'none';
+            resolve(false);
+        };
+        
+        // Cerrar al hacer clic fuera del modal
+        confirmModal.onclick = (e) => {
+            if (e.target === confirmModal) {
+                confirmModal.style.display = 'none';
+                resolve(false);
+            }
+        };
+    });
+}
+
 // Función para confirmar cambio de foto
 async function confirmarCambioFoto() {
     if (currentPhoto) {
-        return confirm('¿Estás seguro de que deseas cambiar la foto actual?');
+        return await showConfirmModal('¿Cambiar la foto actual? Se perderá la imagen seleccionada.');
     }
     return true;
 }
 
+function selectPhoto({ capture } = {}) {
+    return new Promise((resolve) => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        if (capture) {
+            input.setAttribute('capture', capture);
+        }
+        input.style.display = 'none';
+        document.body.appendChild(input);
+
+        let resolved = false;
+        const cleanup = () => {
+            if (input.parentNode) {
+                document.body.removeChild(input);
+            }
+        };
+
+        const finish = (file) => {
+            if (resolved) return;
+            resolved = true;
+            cleanup();
+            resolve(file || null);
+        };
+
+        input.addEventListener('change', () => {
+            const file = input.files && input.files[0] ? input.files[0] : null;
+            finish(file);
+        }, { once: true });
+
+        input.addEventListener('cancel', () => {
+            finish(null);
+        }, { once: true });
+
+        input.click();
+    });
+}
+
 // Botón cámara
 btnCamara.addEventListener('click', async () => {
-    if (await confirmarCambioFoto()) {
-        camaraInput.click();
+    if (!(await confirmarCambioFoto())) {
+        return;
+    }
+    const file = await selectPhoto({ capture: 'environment' });
+    if (file) {
+        handlePhotoSelection(file);
     }
 });
 
 // Botón galería
 btnGaleria.addEventListener('click', async () => {
-    if (await confirmarCambioFoto()) {
-        fotoInput.click();
+    if (!(await confirmarCambioFoto())) {
+        return;
+    }
+    const file = await selectPhoto();
+    if (file) {
+        handlePhotoSelection(file);
     }
 });
 
@@ -392,39 +420,118 @@ btnGaleria.addEventListener('click', async () => {
 async function handlePhotoSelection(file) {
     if (!file) return;
     
-    currentPhoto = file;
-    
-    // Mostrar preview
+    // Mostrar preview del archivo original
     const reader = new FileReader();
     reader.onload = (e) => {
         previewImg.src = e.target.result;
-        previewFilename.textContent = file.name;
-        fotoPreview.style.display = 'block';
+        previewFilename.textContent = `${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`;
+        fotoPreview.style.display = 'flex';
     };
     reader.readAsDataURL(file);
+    
+    // Comprimir en segundo plano
+    try {
+        const compressedFile = await compressImageIfNeeded(file);
+        currentPhoto = compressedFile;
+        
+        // Actualizar el nombre del archivo en el preview con el tamaño comprimido
+        previewFilename.textContent = `${file.name} → ${(compressedFile.size / 1024 / 1024).toFixed(2)}MB`;
+    } catch (error) {
+        console.error('Error al comprimir:', error);
+        currentPhoto = file;
+    }
 }
 
-camaraInput.addEventListener('change', (e) => {
-    if (e.target.files.length > 0) {
-        handlePhotoSelection(e.target.files[0]);
-    } else if (currentPhoto) {
-        // Usuario canceló, mantener foto actual
-        camaraInput.value = '';
-    }
-});
+// Entradas dinámicas manejan la selección, no se necesitan listeners directos
 
-fotoInput.addEventListener('change', (e) => {
-    if (e.target.files.length > 0) {
-        handlePhotoSelection(e.target.files[0]);
-    } else if (currentPhoto) {
-        // Usuario canceló, mantener foto actual
-        fotoInput.value = '';
+// Función para comprimir imagen si es necesaria
+async function compressImageIfNeeded(file, maxSizeMB = 1) {
+    const maxSizeBytes = maxSizeMB * 1024 * 1024;
+    
+    // Si el archivo es menor a 1MB, no comprimir
+    if (file.size <= maxSizeBytes) {
+        return file;
     }
-});
+    
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        
+        reader.onerror = (error) => {
+            reject(error);
+        };
+        
+        reader.onload = (event) => {
+            const img = new Image();
+            
+            img.onerror = (error) => {
+                reject(error);
+            };
+            
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                
+                // Reducir dimensiones si son muy grandes (max 1920px)
+                const maxDimension = 1920;
+                if (width > maxDimension || height > maxDimension) {
+                    if (width > height) {
+                        height = Math.round((height / width) * maxDimension);
+                        width = maxDimension;
+                    } else {
+                        width = Math.round((width / height) * maxDimension);
+                        height = maxDimension;
+                    }
+                }
+                
+                canvas.width = width;
+                canvas.height = height;
+                
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                // Comprimir con calidad adaptativa
+                let quality = 0.7;
+                const originalSizeMB = file.size / 1024 / 1024;
+                
+                if (originalSizeMB > 10) {
+                    quality = 0.5;
+                } else if (originalSizeMB > 5) {
+                    quality = 0.6;
+                } else if (originalSizeMB > 3) {
+                    quality = 0.65;
+                }
+                
+                canvas.toBlob(
+                    (blob) => {
+                        if (!blob) {
+                            reject(new Error('No se pudo comprimir la imagen'));
+                            return;
+                        }
+                        
+                        const compressedFile = new File([blob], file.name, {
+                            type: 'image/jpeg',
+                            lastModified: Date.now()
+                        });
+                        
+                        resolve(compressedFile);
+                    },
+                    'image/jpeg',
+                    quality
+                );
+            };
+            
+            img.src = event.target.result;
+        };
+        
+        reader.readAsDataURL(file);
+    });
+}
 
 // Función para subir foto al webhook
 async function uploadPhotoToWebhook(file, motivo) {
-    const formData = new FormData();
+    try {
+        const formData = new FormData();
     
     // Generar path y filename
     const ahora = new Date();
@@ -438,14 +545,12 @@ async function uploadPhotoToWebhook(file, motivo) {
     const motivoLimpio = motivo.substring(0, 30).replace(/[^a-zA-Z0-9]/g, '_').toUpperCase();
     const filename = `${dia}_${hora}_${motivoLimpio}.PNG`;
     
-    // Crear un nuevo archivo con el nombre correcto
+    // Crear un nuevo archivo con el nombre correcto (file ya viene comprimido)
     const renamedFile = new File([file], filename, { type: file.type });
     
     formData.append('file', renamedFile);
     formData.append('path', path);
     formData.append('filename', filename);
-    
-    console.log('Subiendo archivo:', filename, 'al path:', path);
     
     const response = await fetch('https://webhookn8n.manasakilla.com/webhook/87f1603e-86ad-4547-8a87-a5d9f9b02115', {
         method: 'POST',
@@ -470,6 +575,10 @@ async function uploadPhotoToWebhook(file, motivo) {
         return data.url;
     } else {
         throw new Error('Respuesta del webhook inválida');
+    }
+    } catch (error) {
+        console.error('Error en uploadPhotoToWebhook:', error);
+        throw error;
     }
 }
 
@@ -562,23 +671,30 @@ document.getElementById('transferencia-form').addEventListener('submit', async (
         
         if (error) throw error;
         
-        // Resetear formulario
-        e.target.reset();
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando notificación...';
         
-        // Resetear foto
+        if (data && data[0]) {
+            const transferenciaCompleta = {
+                ...data[0],
+                foto_url: fotoURL,
+                subido_por_nombre: nombreCompleto
+            };
+            
+            try {
+                await notificarTransferencia(transferenciaCompleta, supabase);
+            } catch (whatsappError) {
+                console.error('Error al enviar notificación:', whatsappError);
+            }
+        }
+        
+        e.target.reset();
         currentPhoto = null;
-        currentPhotoURL = null;
         fotoPreview.style.display = 'none';
         previewImg.src = '';
-        camaraInput.value = '';
-        fotoInput.value = '';
-        
-        // Resetear botones a ingreso por defecto
         document.querySelectorAll('.tipo-btn').forEach(b => b.classList.remove('active'));
         document.querySelector('.tipo-btn[data-tipo="ingreso"]').classList.add('active');
         document.getElementById('caso').value = 'ingreso';
         
-        // Recargar según el rol
         if (currentUserData && (currentUserData.rol === 'admin' || currentUserData.rol === 'contador')) {
             loadSaldo();
             loadTransferencias();
@@ -586,7 +702,6 @@ document.getElementById('transferencia-form').addEventListener('submit', async (
             loadTransferenciasDelDia();
         }
         
-        // Mensaje de éxito
         showMessage('Transferencia guardada exitosamente', 'success');
         
     } catch (error) {
@@ -669,16 +784,24 @@ window.onclick = (event) => {
 };
 
 async function logout() {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
+    try {
+        // Cerrar sesión en Supabase con scope local (evita el error 403)
+        await supabase.auth.signOut({ scope: 'local' });
+    } catch (error) {
         console.error('Error al cerrar sesión:', error);
-    } else {
-        // Limpiar caché al cerrar sesión
-        localStorage.removeItem('userRole');
-        localStorage.removeItem('userNombres');
-        localStorage.removeItem('userApellidos');
-        window.location.href = 'login.html';
+        // Continuar con el logout aunque falle
     }
+    
+    // Limpiar localStorage
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('userNombres');
+    localStorage.removeItem('userApellidos');
+    
+    // Limpiar sessionStorage también
+    sessionStorage.clear();
+    
+    // Redirigir al login con parámetro de logout y replace para evitar volver atrás
+    window.location.replace('login.html?logout=true');
 }
 
 // Event listeners para filtros (solo si están disponibles)
@@ -717,3 +840,123 @@ style.textContent =
     '    }' +
     '}';
 document.head.appendChild(style);
+
+// =====================================================
+// FUNCIONES DE NOTIFICACIÓN WHATSAPP
+// =====================================================
+
+async function obtenerConfiguracionWhatsApp(supabase) {
+    try {
+        const { data, error } = await supabase
+            .from('ferredatos')
+            .select('*')
+            .limit(1)
+            .single();
+
+        if (error) {
+            console.error('Error al obtener configuración WhatsApp:', error);
+            return null;
+        }
+
+        return data;
+    } catch (error) {
+        console.error('Error en obtenerConfiguracionWhatsApp:', error);
+        return null;
+    }
+}
+
+async function enviarNotificacionWhatsApp(transferencia, ferredatos) {
+    try {
+        const fecha = new Date(transferencia.fechahora);
+        const fechaFormateada = fecha.toLocaleDateString('es-EC', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+        const horaFormateada = fecha.toLocaleTimeString('es-EC', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+        });
+
+        const emoji = transferencia.caso === 'ingreso' ? '💰' : '💸';
+        const tipoMovimiento = transferencia.caso === 'ingreso' ? 'INGRESO' : 'EGRESO';
+        const montoFormateado = parseFloat(transferencia.monto).toFixed(2);
+
+        // Construir el mensaje personalizado
+        const mensaje = `${emoji} *Nueva Transferencia Registrada*
+
+*DETALLES DEL MOVIMIENTO*
+
+
+📅 *Fecha:* ${fechaFormateada}
+🕐 *Hora:* ${horaFormateada}
+
+${transferencia.caso === 'ingreso' ? '✅' : '❌'} *Tipo:* ${tipoMovimiento}
+💵 *Monto:* $${montoFormateado}
+
+📝 *Motivo:*
+${transferencia.motivo}
+
+👤 *Registrado por:*
+${transferencia.subido_por_nombre}
+
+📸 *Comprobante adjunto*
+
+_Sistema de Gestión FERRESOLUCIONES_
+_Powered by FERRESOLUCIONES Tech_`;
+
+        const url = `https://api.manasakilla.com/message/sendMedia/${ferredatos.instance}`;
+        const bodyData = {
+            number: ferredatos.number,
+            mediatype: 'image',
+            mimetype: 'image/jpeg',
+            caption: mensaje,
+            media: transferencia.foto_url,
+            fileName: `TRANSFERENCIA_${fechaFormateada.replace(/\//g, '-')}_${horaFormateada.replace(/:/g, '-')}.jpg`,
+            delay: 1000,
+            linkPreview: false
+        };
+
+        const options = {
+            method: 'POST',
+            headers: {
+                'apikey': ferredatos.apikey,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(bodyData)
+        };
+
+        const response = await fetch(url, options);
+        const data = await response.json();
+
+        if (response.ok) {
+            return { success: true, data };
+        } else {
+            console.error('Error al enviar notificación:', data);
+            return { success: false, error: data };
+        }
+
+    } catch (error) {
+        console.error('Error en enviarNotificacionWhatsApp:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+async function notificarTransferencia(transferencia, supabase) {
+    try {
+        const ferredatos = await obtenerConfiguracionWhatsApp(supabase);
+
+        if (!ferredatos) {
+            return { success: false, error: 'Configuración no disponible' };
+        }
+
+        const resultado = await enviarNotificacionWhatsApp(transferencia, ferredatos);
+        return resultado;
+
+    } catch (error) {
+        console.error('Error en notificarTransferencia:', error);
+        return { success: false, error: error.message };
+    }
+}
