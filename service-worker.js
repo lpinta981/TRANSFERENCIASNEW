@@ -1,11 +1,11 @@
-const CACHE_NAME = 'ferresoluciones-v11';
+const CACHE_NAME = 'ferresoluciones-v12';
 const urlsToCache = [
-  'https://transferenciasnew.manasakilla.com/',
-  'https://transferenciasnew.manasakilla.com/index.html',
-  'https://transferenciasnew.manasakilla.com/login.html',
-  'https://transferenciasnew.manasakilla.com/styles.css',
-  'https://transferenciasnew.manasakilla.com/app.js',
-  'https://transferenciasnew.manasakilla.com/auth.js',
+  'https://transferencias.manasakilla.com/',
+  'https://transferencias.manasakilla.com/index.html',
+  'https://transferencias.manasakilla.com/login.html',
+  'https://transferencias.manasakilla.com/styles.css',
+  'https://transferencias.manasakilla.com/app.js',
+  'https://transferencias.manasakilla.com/auth.js',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'
 ];
@@ -68,7 +68,7 @@ self.addEventListener('fetch', event => {
         })
         .catch(() => {
           if (request.destination === 'document') {
-            return caches.match('https://transferenciasnew.manasakilla.com/index.html');
+            return caches.match('https://transferencias.manasakilla.com/index.html');
           }
         })
     );
