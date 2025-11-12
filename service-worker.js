@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ferresoluciones-v12';
+const CACHE_NAME = 'ferresoluciones-v13';
 const urlsToCache = [
   'https://transferencias.manasakilla.com/',
   'https://transferencias.manasakilla.com/index.html',
@@ -43,8 +43,38 @@ self.addEventListener('fetch', event => {
   
   const url = new URL(request.url);
 
-  if (url.hostname.includes('supabase') || url.hostname.includes('manasakilla')) {
+  if (
+    url.hostname.includes('supabase') ||
+    url.hostname.includes('manasakilla') ||
+    url.hostname.includes('cdn.jsdelivr.net')
+  ) {
     event.respondWith(fetch(request));
+    return;
+  }
+
+  if (request.destination === 'script' || request.url.endsWith('.js')) {
+    event.respondWith((async () => {
+      try {
+        const networkResponse = await fetch(request);
+
+        if (networkResponse && networkResponse.ok) {
+          try {
+            const cache = await caches.open(CACHE_NAME);
+            await cache.put(request, networkResponse.clone());
+          } catch (cacheError) {
+            console.log('Error al cachear script:', cacheError);
+          }
+        }
+
+        return networkResponse;
+      } catch (error) {
+        const cachedResponse = await caches.match(request);
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+        throw error;
+      }
+    })());
     return;
   }
 

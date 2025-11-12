@@ -1,5 +1,5 @@
 const SUPABASE_URL = 'https://lpsupabase.manasakilla.com';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ewogICJyb2xlIjogImFub24iLAogICJpc3MiOiAic3VwYWJhc2UiLAogICJpYXQiOiAxNzE1MDUwODAwLAogICJleHAiOiAxODcyODE3MjAwCn0.ElbNIiT2JsqJkVxUx4bRasL7GpN-Y1A1-5h09fsgpW8';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ewogICJyb2xlIjogImFub24iLAogICJpc3MiOiAic3VwYWJhc2UiLAogICJpYXQiOiAxNzE1MDUwODAwLAogICJleHAiOiAxODcyODE3MjAwCn0.mKBTuXoyxw3lXRGl1VpSlGbSeiMnRardlIx1q5n-o0k';
 
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -18,6 +18,59 @@ const toggleText = document.getElementById('toggle-text');
 const authSubtitle = document.getElementById('auth-subtitle');
 const messageDiv = document.getElementById('message');
 
+// Clear any stale session data before attempting Supabase auth
+async function resetClientAuthState() {
+    try {
+        await supabase.auth.signOut({ scope: 'local' });
+    } catch (error) {
+        console.warn('La sesion previa ya estaba limpia o no pudo cerrarse.', error);
+    }
+
+    try {
+        localStorage.clear();
+    } catch (error) {
+        console.warn('No se pudo limpiar localStorage.', error);
+    }
+
+    try {
+        sessionStorage.clear();
+    } catch (error) {
+        console.warn('No se pudo limpiar sessionStorage.', error);
+    }
+
+    try {
+        if ('caches' in window) {
+            const cacheNames = await caches.keys();
+            await Promise.all(
+                cacheNames
+                    .filter(name => name.startsWith('ferresoluciones'))
+                    .map(name => caches.delete(name))
+            );
+        }
+    } catch (error) {
+        console.warn('No se pudieron limpiar los caches del Service Worker.', error);
+    }
+
+    try {
+        if ('serviceWorker' in navigator) {
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            await Promise.all(
+                registrations
+                    .filter(reg => reg.scope && reg.scope.includes('/TRANSFERENCIAS/'))
+                    .map(async reg => {
+                        try {
+                            await reg.update();
+                        } catch (swError) {
+                            console.warn('No se pudo actualizar el Service Worker.', swError);
+                        }
+                    })
+            );
+        }
+    } catch (error) {
+        console.warn('No se pudieron gestionar los Service Workers registrados.', error);
+    }
+}
+
 authForm.addEventListener('submit', handleAuth);
 toggleLink.addEventListener('click', toggleAuthMode);
 
@@ -31,6 +84,8 @@ async function handleAuth(e) {
     authBtn.textContent = 'Procesando...';
 
     try {
+        await resetClientAuthState();
+
         if (isLogin) {
             await loginUser(email, password);
         } else {

@@ -1,5 +1,5 @@
 const supabaseUrl = 'https://lpsupabase.manasakilla.com';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ewogICJyb2xlIjogImFub24iLAogICJpc3MiOiAic3VwYWJhc2UiLAogICJpYXQiOiAxNzE1MDUwODAwLAogICJleHAiOiAxODcyODE3MjAwCn0.ElbNIiT2JsqJkVxUx4bRasL7GpN-Y1A1-5h09fsgpW8';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ewogICJyb2xlIjogImFub24iLAogICJpc3MiOiAic3VwYWJhc2UiLAogICJpYXQiOiAxNzE1MDUwODAwLAogICJleHAiOiAxODcyODE3MjAwCn0.mKBTuXoyxw3lXRGl1VpSlGbSeiMnRardlIx1q5n-o0k';
 const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 let currentUser = null;
@@ -661,7 +661,7 @@ document.getElementById('transferencia-form').addEventListener('submit', async (
             motivo: motivo,
             fotografia: fotoURL,
             user_id: currentUser.id,
-            subido_por: nombreCompleto
+            subido_por: currentUser.email
         };
         
         const { data, error } = await supabase
